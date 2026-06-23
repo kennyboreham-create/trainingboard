@@ -7,14 +7,14 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { background-color: #0b1329; touch-action: none; }
-        canvas { background-size: cover; background-position: center; touch-action: none; }
+        canvas { background-size: cover; background-position: center; touch-action: none; background-repeat: no-repeat; }
     </style>
 </head>
 <body class="text-slate-100 font-sans min-h-screen flex flex-col items-center p-4 select-none">
 
     <div class="max-w-4xl w-full flex justify-between items-center mb-2 shrink-0">
         <div>
-            <h1 class="text-xl font-black uppercase text-white tracking-tight">Tactics Simulator</h1>
+            <h1 class="text-xl font-black uppercase text-white tracking-tight">Tactics Challenge Arena</h1>
             <select id="level-selector" onchange="loadSelectedLevel()" class="bg-slate-900 border border-slate-800 text-xs px-3 py-1.5 rounded-xl font-bold mt-1 text-slate-300 outline-none"></select>
         </div>
         <div class="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl text-center">
@@ -28,8 +28,8 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwFoBL0HD2LbNz38N_8O-wfW3ZzjO8BvRU-QmHCc9HfEvCNxjFXSoNUZ_GDm1bfB7cT/exec";
-        const playerId = localStorage.getItem('hockey_player_id') || "P001"; // Fallback alignment
+        const API_URL = "https://script.google.com/macros/s/AKfycbyi04VRkZt27UmlfJKFQ9i2t7LvDuWl4-AWEB-hDuzVeQ4X-GYtZ7wk6NFYUG-_mTuj/exec";
+        const playerId = localStorage.getItem('hockey_player_id') || "P001";
         
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -40,8 +40,8 @@
         let activeDragElement = null;
         let isLevelCleared = false;
 
-        // Audio Pipelines
-        const sfxMusic = new Audio('assets/music.mp3'); sfxMusic.loop = true; sfxMusic.volume = 0.3;
+        // Audio Elements
+        const sfxMusic = new Audio('assets/music.mp3'); sfxMusic.loop = true; sfxMusic.volume = 0.25;
         const sfxScore = new Audio('assets/scores.mp3');
         const sfxPenalty = new Audio('assets/penalty.mp3');
 
@@ -60,7 +60,7 @@
                     selector.innerHTML = levels.map(l => `<option value="${l.level_id}">${l.title}</option>`).join('');
                     loadSelectedLevel();
                 }
-            } catch (err) { console.error("Initialization breakdown:", err); }
+            } catch (err) { console.error("Initialization error:", err); }
         }
 
         function loadSelectedLevel() {
@@ -68,9 +68,11 @@
             activeLevel = levels.find(l => l.level_id === lvlId);
             if (!activeLevel) return;
 
+            // This line applies assets/bg.png seamlessly from data structures
             canvas.style.backgroundImage = `url('${activeLevel.background_url}')`;
-            elements = JSON.parse(JSON.stringify(activeLevel.objects)); // Deep clone objects Array
+            elements = JSON.parse(JSON.stringify(activeLevel.objects)); 
             isLevelCleared = false;
+            
             document.getElementById('game-status-text').innerText = "Solve Level";
             document.getElementById('game-status-text').className = "text-xs font-bold uppercase tracking-wider text-slate-400 ml-1";
             draw();
@@ -80,18 +82,17 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             elements.forEach(obj => {
-                if (obj.name === 'correct') return; // Hide target hitbox coordinates from youth screens
+                if (obj.name === 'correct') return; // Completely hidden from the player's view
 
                 ctx.save();
                 ctx.fillStyle = obj.isPlayer ? '#2563eb' : '#e2e8f0';
-                ctx.shadowBlur = 10; ctx.shadowColor = obj.isPlayer ? '#2563eb' : 'transparent';
+                ctx.shadowBlur = obj.isPlayer ? 15 : 0;
+                ctx.shadowColor = '#2563eb';
                 
-                // Draw Tactical Markers
                 ctx.beginPath();
                 ctx.arc(obj.x, obj.y, 25, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Text overlay binding
                 ctx.fillStyle = obj.isPlayer ? '#ffffff' : '#0f172a';
                 ctx.font = 'bold 16px sans-serif';
                 ctx.textAlign = 'center';
@@ -101,7 +102,6 @@
             });
         }
 
-        // Pointer event standardizations (Touch & Cursor unified coordinate extractions)
         function getCanvasCoordinates(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -120,7 +120,7 @@
             e.preventDefault();
             const pos = getCanvasCoordinates(e);
             
-            // Prioritize dragging the Player token
+            // Allow dragging the main player object pieces
             activeDragElement = elements.find(obj => obj.isPlayer && Math.hypot(obj.x - pos.x, obj.y - pos.y) < 30);
             if (!activeDragElement) {
                 activeDragElement = elements.find(obj => obj.name !== 'correct' && Math.hypot(obj.x - pos.x, obj.y - pos.y) < 30);
@@ -135,7 +135,6 @@
             e.preventDefault();
             const pos = getCanvasCoordinates(e);
             
-            // Constrain elements within canvas grid dimensions
             activeDragElement.x = Math.max(30, Math.min(pos.x, canvas.width - 30));
             activeDragElement.y = Math.max(30, Math.min(pos.y, canvas.height - 30));
             
@@ -156,7 +155,7 @@
 
             const distance = Math.hypot(playerToken.x - targetToken.x, playerToken.y - targetToken.y);
             
-            if (distance < 40) { // Collision threshold match reached
+            if (distance < 45) { // Collision threshold matches target coordinate zone
                 isLevelCleared = true;
                 activeDragElement = null;
                 triggerSuccessState();
@@ -173,11 +172,10 @@
                 const res = await response.json();
                 alert(res.message);
                 
-                // Communicate directly to parent application dashboard profile view if running inside iframe
                 if (window.parent) {
                     window.parent.postMessage({ action: 'refreshStars' }, '*');
                 }
-            } catch(e) { console.error("Star payout transaction breakdown:", e); }
+            } catch(e) { console.error("Database star sync failed:", e); }
         }
     </script>
 </body>
