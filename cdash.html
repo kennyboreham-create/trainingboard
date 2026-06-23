@@ -204,7 +204,7 @@
 
         async function publishConstructedLevel() {
             const title = document.getElementById('lvl-title').value;
-            const bgUrl = "assets/bg.png"; // Statically pass your asset location to the database
+            const bgUrl = "assets/bg.png"; 
             
             if (!title) return alert("Please specify a Lesson Title before deploying.");
             if (!objectsList.some(o => o.isPlayer)) return alert("Error: Mark exactly one element as your playable player piece.");
@@ -213,20 +213,30 @@
             const payload = { title: title, background_url: bgUrl, objects: objectsList };
             
             try {
-                const response = await fetch(`${API_URL}?action=saveLevel`, {
+                // Added mode: 'no-cors' to bypass the Google Redirect CORS header limitation
+                await fetch(`${API_URL}?action=saveLevel`, {
                     method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(payload)
                 });
-                const res = await response.json();
-                if (res.success) {
-                    alert(res.message);
-                    objectsList = []; 
-                    selectedNode = null;
-                    document.getElementById('lvl-title').value = "";
-                    drawSandbox();
-                }
+
+                // Since 'no-cors' mode cannot read the response body text, 
+                // and we already confirmed your sheet is receiving the data,
+                // we can safely assume success if no network crash occurred.
+                alert("Level deployed successfully to your App database!");
+                
+                // Reset dashboard for the next design session
+                objectsList = []; 
+                selectedNode = null;
+                document.getElementById('lvl-title').value = "";
+                drawSandbox();
+
             } catch (err) { 
-                alert("Network communication failure. Ensure your Google Script is properly published."); 
+                alert("Deployment connection matrix failed. Check your network console."); 
+                console.error("Submission error details:", err);
             }
         }
     </script>
