@@ -13,7 +13,6 @@
             background-repeat: no-repeat;
             touch-action: none; 
         }
-        /* Custom animation for the victory popup window */
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
@@ -31,7 +30,7 @@
             <select id="level-selector" onchange="loadSelectedLevelByIndex()" class="bg-slate-900 border border-slate-800 text-xs px-3 py-1.5 rounded-xl font-bold mt-1 text-slate-300 outline-none cursor-pointer"></select>
         </div>
         <div class="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl text-center">
-            <span id="game-status-text" class="text-xs font-bold uppercase tracking-wider text-slate-400">Position the Pieces</span>
+            <span id="game-status-text" class="text-xs font-bold uppercase tracking-wider text-slate-400">Loading Tactics...</span>
         </div>
     </div>
 
@@ -42,10 +41,12 @@
     <div id="victory-container"></div>
 
     <script>
-        // Target active Apps Script macro backend pipeline endpoint changed
-        const API_URL = "https://script.google.com/macros/s/AKfycbwFoBL0HD2LbNz38N_8O-wfW3ZzjO8BvRU-QmHCc9HfEvCNxjFXSoNUZ_GDm1bfB7cT/exec";
+        // PASTE YOUR COPIED PERMANENT WEB APP URL DIRECTLY BETWEEN THESE QUOTES:
+        const API_URL = "https://script.google.com/macros/s/AKfycbyi04VRkZt27UmlfJKFQ9i2t7LvDuWl4-AWEB-hDuzVeQ4X-GYtZ7wk6NFYUG-_mTuj/exec";
+        
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        
         let levels = [];
         let activeLevelIndex = 0;
         let activeLevel = null;
@@ -53,39 +54,43 @@
         let activeDragElement = null;
         let isLevelCleared = false;
 
-        // Audio asset bindings
+        // Audio initialization bindings
         const sfxMusic = new Audio('assets/music.mp3'); sfxMusic.loop = true; sfxMusic.volume = 0.20;
         const sfxScore = new Audio('assets/scores.mp3');
-        const sfxPenalty = new Audio('assets/penalty.mp3');
 
-        // Unlock audio loop systems gracefully upon user's first touch point interact path
         window.addEventListener('DOMContentLoaded', () => {
             document.body.addEventListener('click', () => { 
-                sfxMusic.play().catch(() => console.log("Music standby initialization handled.")); 
+                sfxMusic.play().catch(() => {}); 
             }, { once: true });
             initGameEngine();
         });
 
-        // Pull active levels array matrix data from Google Sheet index endpoint
+        // Pull level payload data safely from Google Sheet rows log index
         async function initGameEngine() {
             try {
-                const response = await fetch(`${API_URL}?action=getLevels`);
+                // Using redirect fallback optimization settings to clear stubborn browser configurations
+                const response = await fetch(`${API_URL}?action=getLevels`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
                 const res = await response.json();
                 
-                if (res.success && res.levels.length > 0) {
+                if (res.success && res.levels && res.levels.length > 0) {
                     levels = res.levels;
                     
-                    // Build level choice drop down list interface selectors dynamically
                     const selector = document.getElementById('level-selector');
                     selector.innerHTML = levels.map((l, index) => `<option value="${index}">Scenario: ${l.title}</option>`).join('');
                     
                     loadLevelByIndex(0);
+                } else if (res.error) {
+                    document.getElementById('game-status-text').innerText = "Database Error";
+                    console.error("Backend Error Description:", res.error);
                 } else {
-                    document.getElementById('game-status-text').innerText = "No Levels Found";
+                    document.getElementById('game-status-text').innerText = "Empty Playbook";
                 }
             } catch (err) { 
-                console.error("Critical level fetch database synchronization break:", err);
-                document.getElementById('game-status-text').innerText = "Data Sync Error";
+                console.error("Connection matrix execution break:", err);
+                document.getElementById('game-status-text').innerText = "Connection Failed";
             }
         }
 
@@ -100,14 +105,11 @@
             activeLevelIndex = index;
             activeLevel = levels[activeLevelIndex];
             document.getElementById('level-selector').value = index;
-
-            // Clear any active victory popup from previous board clears
             document.getElementById('victory-container').innerHTML = "";
 
-            // Assign base rink map background assets/bg.png
-            canvas.style.backgroundImage = `url('${activeLevel.background_url || 'assets/bg.png'}')`;
+            // Statically force background layout canvas assignment target to assets location
+            canvas.style.backgroundImage = "url('assets/bg.png')";
             
-            // Deep clone operational level design objects layout array configuration space
             elements = JSON.parse(JSON.stringify(activeLevel.objects)); 
             isLevelCleared = false;
             
@@ -117,15 +119,13 @@
             drawGameLayout();
         }
 
-        // Standardized visual element compilation drawing loops
         function drawGameLayout() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             elements.forEach(obj => {
-                if (obj.name === 'correct') return; // Completely hidden. Kids can't see this marker.
+                if (obj.name === 'correct') return; // Hidden from player blueprint matrix view
 
                 ctx.save();
-                // User controlled item token is colored deep theme electric blue; others soft ice slate gray
                 ctx.fillStyle = obj.isPlayer ? '#2563eb' : '#e2e8f0';
                 
                 if (obj.isPlayer) {
@@ -133,12 +133,10 @@
                     ctx.shadowColor = '#2563eb';
                 }
                 
-                // Render standardized hockey positional node chips
                 ctx.beginPath();
                 ctx.arc(obj.x, obj.y, 25, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Overlay typography marker characters centered nicely inside nodes
                 ctx.fillStyle = obj.isPlayer ? '#ffffff' : '#0f172a';
                 ctx.font = 'bold 16px sans-serif';
                 ctx.textAlign = 'center';
@@ -148,7 +146,6 @@
             });
         }
 
-        // Unify cross-device screen sizing matrices into perfect 1000x600 grid map system
         function getCanvasCoordinates(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -159,7 +156,6 @@
             };
         }
 
-        // Intercept Touch and Mouse press configurations
         canvas.addEventListener('mousedown', startDrag);
         canvas.addEventListener('touchstart', startDrag, { passive: false });
 
@@ -168,7 +164,6 @@
             e.preventDefault();
             const pos = getCanvasCoordinates(e);
             
-            // Check if player clicked a piece (prioritize picking up the main player piece first)
             activeDragElement = elements.find(obj => obj.isPlayer && Math.hypot(obj.x - pos.x, obj.y - pos.y) < 30);
             if (!activeDragElement) {
                 activeDragElement = elements.find(obj => obj.name !== 'correct' && Math.hypot(obj.x - pos.x, obj.y - pos.y) < 30);
@@ -183,7 +178,6 @@
             e.preventDefault();
             const pos = getCanvasCoordinates(e);
             
-            // Lock nodes directly inside boundary parameters inside canvas board wall trims
             activeDragElement.x = Math.max(30, Math.min(pos.x, canvas.width - 30));
             activeDragElement.y = Math.max(30, Math.min(pos.y, canvas.height - 30));
             
@@ -196,31 +190,27 @@
 
         function endDrag() { activeDragElement = null; }
 
-        // Live boundary radar tracking collision evaluation mechanics
         function evaluateCollisionMatrix() {
             const playerToken = elements.find(o => o.isPlayer);
             const targetToken = elements.find(o => o.name === 'correct');
             
             if (!playerToken || !targetToken || isLevelCleared) return;
 
-            // Measure straight path index length distance via Hypotenuse theorem calculation
             const distance = Math.hypot(playerToken.x - targetToken.x, playerToken.y - targetToken.y);
             
-            if (distance < 45) { // Match reach confirmation parameters hit
+            if (distance < 45) {
                 isLevelCleared = true;
                 activeDragElement = null;
                 triggerSuccessCelebration();
             }
         }
 
-        // Local Instant Action Success Notification UI Deployment Generator
         function triggerSuccessCelebration() {
             sfxScore.play().catch(() => {});
             
             document.getElementById('game-status-text').innerText = "✓ Level Cleared";
             document.getElementById('game-status-text').className = "text-xs font-bold uppercase tracking-wider text-emerald-400";
             
-            // Inject dark themed overlay screen block completely locally instantly
             const container = document.getElementById('victory-container');
             container.innerHTML = `
                 <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
@@ -246,12 +236,9 @@
 
         function advanceToNextScenario() {
             let nextIndex = activeLevelIndex + 1;
-            
-            // Loop right back to level 1 index if player finishes all current lessons lists
             if (nextIndex >= levels.length) {
                 nextIndex = 0;
             }
-            
             loadLevelByIndex(nextIndex);
         }
     </script>
