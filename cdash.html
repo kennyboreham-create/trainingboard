@@ -8,7 +8,7 @@
     <style>
         body { background-color: #0b1329; }
         canvas {
-            background-size: cover;
+            background-size: 100% 100%;
             background-position: center;
             background-repeat: no-repeat;
         }
@@ -30,13 +30,26 @@
             <div class="space-y-3">
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Lesson Title</label>
-                    <input type="text" id="lvl-title" placeholder="e.g. 1-2-2 Forecheck Pressure" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                    <input type="text" id="lvl-title" placeholder="e.g. 1-2-2 Forecheck Pressure" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Active Map Board Target</label>
-                    <div class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-emerald-400 font-mono flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        assets/bg.png (Loaded)
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Map Board Target</label>
+                        <span id="bg-option-count" class="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-slate-500 font-bold">0 Templates</span>
+                    </div>
+                    <div class="relative w-full group">
+                        <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        </div>
+                        
+                        <select id="bg-selector" onchange="updateDashboardBackground()" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-10 py-2.5 text-xs text-emerald-400 font-mono font-bold appearance-none outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition cursor-pointer">
+                        </select>
+                        
+                        <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-slate-400 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -44,15 +57,15 @@
             <h2 class="text-sm font-extrabold uppercase tracking-wider text-blue-400 pt-2">2. Toolset Element Library</h2>
             <p class="text-[10px] text-slate-400 leading-relaxed">Click an element below to generate it at the center of the canvas board. Drag it to your desired position.</p>
             <div id="toolbox" class="grid grid-cols-2 gap-2">
-                <button onclick="spawnElement('F1')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200">F1</button>
-                <button onclick="spawnElement('F2')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200">F2</button>
-                <button onclick="spawnElement('F3')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200">F3</button>
-                <button onclick="spawnElement('D1')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200">D1</button>
-                <button onclick="spawnElement('D2')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200">D2</button>
-                <button onclick="spawnElement('D3')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200">D3</button>
-                <button onclick="spawnElement('puck')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-amber-500">Puck</button>
-                <button onclick="spawnElement('net')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-red-400">Net</button>
-                <button onclick="spawnElement('correct')" class="col-span-2 bg-emerald-950/40 text-emerald-400 border border-emerald-900/40 py-2 rounded-xl text-xs font-black font-mono tracking-wider">ADD CORRECT TARGET ZONE</button>
+                <button onclick="spawnElement('F1')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200 cursor-pointer">F1</button>
+                <button onclick="spawnElement('F2')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200 cursor-pointer">F2</button>
+                <button onclick="spawnElement('F3')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200 cursor-pointer">F3</button>
+                <button onclick="spawnElement('D1')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200 cursor-pointer">D1</button>
+                <button onclick="spawnElement('D2')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200 cursor-pointer">D2</button>
+                <button onclick="spawnElement('D3')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-slate-200 cursor-pointer">D3</button>
+                <button onclick="spawnElement('puck')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-amber-500 cursor-pointer">Puck</button>
+                <button onclick="spawnElement('net')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 py-2 rounded-xl text-xs font-bold font-mono text-red-400 cursor-pointer">Net</button>
+                <button onclick="spawnElement('correct')" class="col-span-2 bg-emerald-950/40 text-emerald-400 border border-emerald-900/40 py-2 rounded-xl text-xs font-black font-mono tracking-wider cursor-pointer hover:bg-emerald-950/60 transition">ADD CORRECT TARGET ZONE</button>
             </div>
 
             <div class="border-t border-slate-800/80 my-2 pt-4">
@@ -84,11 +97,38 @@
         let selectedNode = null;
         let isDragging = false;
 
-        // Force image assignment from your local directory immediately on load
+        // Editable Global Background Array — Add paths here anytime!
+        const AVAILABLE_BACKGROUNDS = [
+            { name: "assets/bg.png (Full Rink)", url: "assets/bg.png" },
+            { name: "assets/bg_half.png (Half Ice)", url: "assets/bg_half.png" },
+            { name: "assets/bg_cross.png (Cross-Ice)", url: "assets/bg_cross.png" }
+        ];
+
         window.addEventListener('DOMContentLoaded', () => {
-            canvas.style.backgroundImage = "url('assets/bg.png')";
+            // Populate background selector dropdown dynamically
+            const selector = document.getElementById('bg-selector');
+            const counter = document.getElementById('bg-option-count');
+            
+            if (selector) {
+                selector.innerHTML = AVAILABLE_BACKGROUNDS.map(bg => 
+                    `<option value="${bg.url}" class="bg-slate-950 text-slate-300 font-sans font-semibold">${bg.name}</option>`
+                ).join('');
+                
+                if (counter) {
+                    counter.innerText = `${AVAILABLE_BACKGROUNDS.length} Templates`;
+                }
+            }
+            
+            updateDashboardBackground();
             drawSandbox();
         });
+
+        function updateDashboardBackground() {
+            const selector = document.getElementById('bg-selector');
+            if (selector && canvas) {
+                canvas.style.backgroundImage = `url('${selector.value}')`;
+            }
+        }
 
         function spawnElement(name) {
             const newNode = {
@@ -111,7 +151,6 @@
                 ctx.save();
                 
                 if (obj.name === 'correct') {
-                    // Transparent bright indicator for coaches view ONLY
                     ctx.fillStyle = 'rgba(16, 185, 129, 0.25)';
                     ctx.strokeStyle = '#10b981';
                     ctx.lineWidth = 2;
@@ -126,7 +165,6 @@
                     ctx.fill();
                 }
 
-                // Selection Highlight ring
                 if (selectedNode && selectedNode.id === obj.id) {
                     ctx.strokeStyle = '#f59e0b'; 
                     ctx.lineWidth = 4;
@@ -204,7 +242,7 @@
 
         async function publishConstructedLevel() {
             const title = document.getElementById('lvl-title').value;
-            const bgUrl = "assets/bg.png"; 
+            const bgUrl = document.getElementById('bg-selector').value; // Dynamically grab selection
             
             if (!title) return alert("Please specify a Lesson Title before deploying.");
             if (!objectsList.some(o => o.isPlayer)) return alert("Error: Mark exactly one element as your playable player piece.");
@@ -213,7 +251,6 @@
             const payload = { title: title, background_url: bgUrl, objects: objectsList };
             
             try {
-                // Added mode: 'no-cors' to bypass the Google Redirect CORS header limitation
                 await fetch(`${API_URL}?action=saveLevel`, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -223,12 +260,8 @@
                     body: JSON.stringify(payload)
                 });
 
-                // Since 'no-cors' mode cannot read the response body text, 
-                // and we already confirmed your sheet is receiving the data,
-                // we can safely assume success if no network crash occurred.
                 alert("Level deployed successfully to your App database!");
                 
-                // Reset dashboard for the next design session
                 objectsList = []; 
                 selectedNode = null;
                 document.getElementById('lvl-title').value = "";
