@@ -80,10 +80,31 @@
                 if (res.success && res.levels && res.levels.length > 0) {
                     levels = res.levels;
                     
+                    // Populate the dropdown menu
                     const selector = document.getElementById('level-selector');
                     selector.innerHTML = levels.map((l, index) => `<option value="${index}">Scenario: ${l.title}</option>`).join('');
                     
-                    loadLevelByIndex(0);
+                    // --- DEEP LINKING PARSER ---
+                    // 1. Parse query parameters from the website's address bar
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const levelParam = urlParams.get('level'); // Looks for "?level=X"
+                    
+                    let targetIndex = 0; // Default fallback to Level 1 (Index 0)
+
+                    if (levelParam !== null) {
+                        // Convert text parameter string to an integer
+                        const parsedLevelNum = parseInt(levelParam, 10);
+                        
+                        // Verify that it's a valid number and within our spreadsheet's level range
+                        if (!isNaN(parsedLevelNum) && parsedLevelNum > 0 && parsedLevelNum <= levels.length) {
+                            targetIndex = parsedLevelNum - 1; // Convert human scale (1, 2, 3) to array index (0, 1, 2)
+                        }
+                    }
+                    
+                    // 2. Boot up the requested scenario index layout
+                    loadLevelByIndex(targetIndex);
+                    // ---------------------------
+
                 } else if (res.error) {
                     document.getElementById('game-status-text').innerText = "Database Error";
                     console.error("Backend Error Description:", res.error);
