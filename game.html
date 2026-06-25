@@ -102,23 +102,40 @@
         }
 
         function loadLevelByIndex(index) {
+            // 1. Structural boundary check to prevent pulling empty arrays
             if (index < 0 || index >= levels.length) return;
             
+            // 2. Cache the active level targets locally
             activeLevelIndex = index;
             activeLevel = levels[activeLevelIndex];
+            
+            // 3. Keep UI elements, dropdown menus, and overlays synced
             document.getElementById('level-selector').value = index;
             document.getElementById('victory-container').innerHTML = "";
 
-            // Statically force background layout canvas assignment target to assets location
-            canvas.style.backgroundImage = "url('assets/bg.png')";
+            // 4. Extract saved map template and apply it to the canvas view canvas tracking layer
+            const activeBg = activeLevel.background_url || "assets/bg.png";
+            canvas.style.backgroundImage = `url('${activeBg}')`;
             
+            // 5. Hard copy element list structures into active tracking loops
             elements = JSON.parse(JSON.stringify(activeLevel.objects)); 
             isLevelCleared = false;
             
-            document.getElementById('game-status-text').innerText = activeLevel.title;
+            // 6. Reset status layout messaging states
+            document.getElementById('game-status-text').innerText = "Find the Gap";
             document.getElementById('game-status-text').className = "text-xs font-bold uppercase tracking-wider text-slate-400";
             
+            // 7. Paint active coordinate targets onto game board
             drawGameLayout();
+
+            // 8. Coach Directions Alert: If custom tactical notes exist, push them to player viewport
+            if (activeLevel.message && activeLevel.message.trim() !== "") {
+                // Enclosed in a tiny 50ms timeout so the browser engine can finish updating 
+                // canvas graphics elements on screen *before* the modal locks down interaction focus.
+                setTimeout(() => {
+                    alert(`Coach's Instructions:\n\n${activeLevel.message}`);
+                }, 50);
+            }
         }
 
         function drawGameLayout() {

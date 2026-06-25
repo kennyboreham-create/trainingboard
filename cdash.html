@@ -29,9 +29,13 @@
             <h2 class="text-sm font-extrabold uppercase tracking-wider text-amber-400">1. Level Information</h2>
             <div class="space-y-3">
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Lesson Title</label>
-                    <input type="text" id="lvl-title" placeholder="e.g. 1-2-2 Forecheck Pressure" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50">
-                </div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Lesson Title</label>
+                        <input type="text" id="lvl-title" placeholder="e.g. 1-2-2 Forecheck Pressure" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Directions / Tactical Context</label>
+                        <textarea id="lvl-message" placeholder="e.g., Hit the open seam between D1 and D2 to complete the break-in sequence." rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50 resize-none"></textarea>
+                    </div>
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Map Board Target</label>
@@ -264,30 +268,51 @@
         }
 
         async function publishConstructedLevel() {
-            const title = document.getElementById('lvl-title').value;
-            const bgUrl = document.getElementById('bg-selector').value; // Dynamically grab selection
+            // 1. Gather all input values from the dashboard form elements
+            const title = document.getElementById('lvl-title').value.trim();
+            const bgUrl = document.getElementById('bg-selector').value; 
+            const message = document.getElementById('lvl-message').value.trim();
             
-            if (!title) return alert("Please specify a Lesson Title before deploying.");
-            if (!objectsList.some(o => o.isPlayer)) return alert("Error: Mark exactly one element as your playable player piece.");
-            if (!objectsList.some(o => o.name === 'correct')) return alert("Error: Create a target zone for the player to touch.");
+            // 2. Strict validation guard checks before allowing a database write
+            if (!title) {
+                return alert("Please specify a Lesson Title before deploying.");
+            }
+            if (!objectsList.some(o => o.isPlayer)) {
+                return alert("Error: Mark exactly one element as your playable player piece (The 'X').");
+            }
+            if (!objectsList.some(o => o.name === 'correct')) {
+                return alert("Error: Create a target zone for the player to touch.");
+            }
 
-            const payload = { title: title, background_url: bgUrl, objects: objectsList };
+            // 3. Construct the network payload matching your Code.gs expected keys
+            const payload = { 
+                title: title, 
+                background_url: bgUrl, 
+                objects: objectsList, 
+                message: message 
+            };
             
             try {
+                // 4. Fire the network post stream across the web gateway
                 await fetch(`${API_URL}?action=saveLevel`, {
                     method: 'POST',
-                    mode: 'no-cors',
+                    mode: 'no-cors', // Bypasses the strict Google Web App redirect CORS shield
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
 
+                // 5. Provide immediate user confirmation feedback
                 alert("Level deployed successfully to your App database!");
                 
+                // 6. Reset the entire sandbox design workspace for the next playbook entry
                 objectsList = []; 
                 selectedNode = null;
                 document.getElementById('lvl-title').value = "";
+                document.getElementById('lvl-message').value = "";
+                
+                // 7. Refresh the viewport canvas to display a pristine rink board surface
                 drawSandbox();
 
             } catch (err) { 
