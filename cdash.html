@@ -140,6 +140,19 @@
             }
         }
 
+        // Paste the new custom element connector right here:
+        function spawnCustomElement() {
+            const inputField = document.getElementById('custom-node-name');
+            let customName = inputField.value.trim();
+            
+            if (!customName) {
+                customName = "NODE";
+            }
+            
+            spawnElement(customName); // Fires your existing creator logic[cite: 1]
+            inputField.value = "";    // Clear the input box text field
+        }
+
         function spawnElement(name) {
             const newNode = {
                 id: 'obj_' + new Date().getTime() + Math.random().toString(36).substr(2, 4),
@@ -285,30 +298,10 @@
 
         // ... (Other existing variables like objectsList, selectedNode) ...
 
-        // Paste the new custom element connector right here:
-        function spawnCustomElement() {
-            const inputField = document.getElementById('custom-node-name');
-            let customName = inputField.value.trim();
-            
-            if (!customName) {
-                customName = "NODE";
-            }
-            
-            spawnElement(customName); // Fires your existing creator logic[cite: 1]
-            inputField.value = "";    // Clear the input box text field
-        }
+        
 
-        // Your existing spawnElement code should be right below it:
-        function spawnElement(name) {
-            const newNode = {
-                id: 'obj_' + new Date().getTime() + Math.random().toString(36).substr(2, 4),
-                name: name,
-                x: 500,
-                y: 300,
-                isPlayer: false
-            };
-        }
-            // ... the rest of your original spawnElement logic ...[cite: 1]
+        
+          
     </script>
 </body>
 </html>
