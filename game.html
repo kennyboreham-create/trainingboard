@@ -115,7 +115,7 @@
             elements = JSON.parse(JSON.stringify(activeLevel.objects)); 
             isLevelCleared = false;
             
-            document.getElementById('game-status-text').innerText = "Find the Gap";
+            document.getElementById('game-status-text').innerText = activeLevel.title;
             document.getElementById('game-status-text').className = "text-xs font-bold uppercase tracking-wider text-slate-400";
             
             drawGameLayout();
