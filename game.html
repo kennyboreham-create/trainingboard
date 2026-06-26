@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hockey Board Challenge</title>
+    <title>Hockey Board</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { background-color: #0b1329; touch-action: none; }
         canvas { 
+            /* Forces the entire image to stretch precisely to the width and height of the canvas box */
             background-size: 100% 100%; 
             background-position: center; 
             background-repeat: no-repeat;
             touch-action: none; 
         }
+        /* Custom animation for the victory popup window */
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
@@ -27,13 +29,10 @@
     <div class="max-w-4xl w-full flex justify-between items-center mb-2 shrink-0">
         <div>
             <h1 class="text-xl font-black uppercase text-white tracking-tight">Hockey Challenge Arena</h1>
-            <div id="level-title-display" class="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">Scenario Dashboard</div>
-            <!-- Hidden fallback loop element if single-level route context is active -->
-            <select id="level-selector" onchange="loadSelectedLevelByIndex()" class="hidden bg-slate-900 border border-slate-800 text-xs px-3 py-1.5 rounded-xl font-bold mt-1 text-slate-300 outline-none cursor-pointer"></select>
+            <select id="level-selector" onchange="loadSelectedLevelByIndex()" class="bg-slate-900 border border-slate-800 text-xs px-3 py-1.5 rounded-xl font-bold mt-1 text-slate-300 outline-none cursor-pointer"></select>
         </div>
-        <div class="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl text-center flex flex-col items-end gap-0.5">
+        <div class="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl text-center">
             <span id="game-status-text" class="text-xs font-bold uppercase tracking-wider text-slate-400">Loading Tactics...</span>
-            <span id="star-status-text" class="text-[10px] font-bold uppercase tracking-widest text-amber-400 hidden">⭐ Star Available</span>
         </div>
     </div>
 
@@ -44,6 +43,7 @@
     <div id="victory-container"></div>
 
     <script>
+        // PASTE YOUR COPIED PERMANENT WEB APP URL DIRECTLY BETWEEN THESE QUOTES:
         const API_URL = "https://script.google.com/macros/s/AKfycbwSuMSji4cLPqHii0UhYSqAr5d-cYGI7PDWI55RiCa9wP-F3tJ9nNONjzzAtnT2Ph2K/exec";
         
         const canvas = document.getElementById('gameCanvas');
@@ -56,12 +56,7 @@
         let activeDragElement = null;
         let isLevelCleared = false;
 
-        // Dynamic lesson integration parameters extracted from URL query strings
-        let urlParams = new URLSearchParams(window.location.search);
-        let targetLevelId = urlParams.get('levelId') || urlParams.get('id'); 
-        let activePlayerId = urlParams.get('playerId') || '';
-        let isAlreadyCompleted = false;
-
+        // Audio initialization bindings
         const sfxMusic = new Audio('assets/music.mp3'); sfxMusic.loop = true; sfxMusic.volume = 0.20;
         const sfxScore = new Audio('assets/scores.mp3');
 
@@ -72,19 +67,10 @@
             initGameEngine();
         });
 
+        // Pull level payload data safely from Google Sheet rows log index
         async function initGameEngine() {
             try {
-                // 1. First fetch global dashboard data context to verify player completion progress logs
-                let completedIds = [];
-                if (activePlayerId) {
-                    const progressRes = await fetch(`${API_URL}?action=getDashboard&playerId=${activePlayerId}`);
-                    const progressData = await progressRes.json();
-                    if (progressData.success && progressData.completedRawIds) {
-                        completedIds = progressData.completedRawIds;
-                    }
-                }
-
-                // 2. Pull training scenarios out of game board arrays
+                // Using redirect fallback optimization settings to clear stubborn browser configurations
                 const response = await fetch(`${API_URL}?action=getLevels`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
@@ -94,28 +80,39 @@
                 if (res.success && res.levels && res.levels.length > 0) {
                     levels = res.levels;
                     
-                    // Match scenario based on incoming URL lesson tags, default to first item if unassigned
-                    let matchingIndex = 0;
-                    if (targetLevelId) {
-                        matchingIndex = levels.findIndex(l => l.id.toString().trim() === targetLevelId.toString().trim());
-                        if (matchingIndex === -1) matchingIndex = 0;
-                    }
-
-                    // Check if this specific resource code block is found inside progress array history
-                    const currentLevelIdStr = levels[matchingIndex].id.toString().trim();
-                    isAlreadyCompleted = completedIds.includes(currentLevelIdStr);
-
-                    // Setup fallback visibility states
+                    // Populate the dropdown menu
                     const selector = document.getElementById('level-selector');
                     selector.innerHTML = levels.map((l, index) => `<option value="${index}">Scenario: ${l.title}</option>`).join('');
-                    if (!targetLevelId) selector.classList.remove('hidden');
+                    
+                    // --- DEEP LINKING PARSER ---
+                    // 1. Parse query parameters from the website's address bar
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const levelParam = urlParams.get('level'); // Looks for "?level=X"
+                    
+                    let targetIndex = 0; // Default fallback to Level 1 (Index 0)
 
-                    loadLevelByIndex(matchingIndex);
+                    if (levelParam !== null) {
+                        // Convert text parameter string to an integer
+                        const parsedLevelNum = parseInt(levelParam, 10);
+                        
+                        // Verify that it's a valid number and within our spreadsheet's level range
+                        if (!isNaN(parsedLevelNum) && parsedLevelNum > 0 && parsedLevelNum <= levels.length) {
+                            targetIndex = parsedLevelNum - 1; // Convert human scale (1, 2, 3) to array index (0, 1, 2)
+                        }
+                    }
+                    
+                    // 2. Boot up the requested scenario index layout
+                    loadLevelByIndex(targetIndex);
+                    // ---------------------------
+
+                } else if (res.error) {
+                    document.getElementById('game-status-text').innerText = "Database Error";
+                    console.error("Backend Error Description:", res.error);
                 } else {
                     document.getElementById('game-status-text').innerText = "Empty Playbook";
                 }
             } catch (err) { 
-                console.error("Connection matrix error:", err);
+                console.error("Connection matrix execution break:", err);
                 document.getElementById('game-status-text').innerText = "Connection Failed";
             }
         }
@@ -126,53 +123,56 @@
         }
 
         function loadLevelByIndex(index) {
+            // 1. Structural boundary check to prevent pulling empty arrays
             if (index < 0 || index >= levels.length) return;
             
+            // 2. Cache the active level targets locally
             activeLevelIndex = index;
             activeLevel = levels[activeLevelIndex];
             
+            // 3. Keep UI elements, dropdown menus, and overlays synced
             document.getElementById('level-selector').value = index;
             document.getElementById('victory-container').innerHTML = "";
-            document.getElementById('level-title-display').innerText = `Scenario: ${activeLevel.title}`;
 
+            // 4. Extract saved map template and apply it to the canvas view canvas tracking layer
             const activeBg = activeLevel.background_url || "assets/bg.png";
             canvas.style.backgroundImage = `url('${activeBg}')`;
             
+            // 5. Hard copy element list structures into active tracking loops
             elements = JSON.parse(JSON.stringify(activeLevel.objects)); 
             isLevelCleared = false;
             
+            // 6. Reset status layout messaging states
             document.getElementById('game-status-text').innerText = "Find the Gap";
             document.getElementById('game-status-text').className = "text-xs font-bold uppercase tracking-wider text-slate-400";
             
-            // Adjust visual star payout tag banners based on verification results
-            const starStatus = document.getElementById('star-status-text');
-            starStatus.classList.remove('hidden');
-            if (isAlreadyCompleted) {
-                starStatus.innerText = "✓ Cleared (0⭐)";
-                starStatus.className = "text-[10px] font-bold uppercase tracking-widest text-slate-500";
-            } else {
-                starStatus.innerText = "⭐ Star Available";
-                starStatus.className = "text-[10px] font-bold uppercase tracking-widest text-amber-400";
-            }
-
+            // 7. Paint active coordinate targets onto game board
             drawGameLayout();
 
+            // 8. Coach Directions Alert: If custom tactical notes exist, push them to player viewport
             if (activeLevel.message && activeLevel.message.trim() !== "") {
-                setTimeout(() => { alert(`Coach's Instructions:\n\n${activeLevel.message}`); }, 50);
+                // Enclosed in a tiny 50ms timeout so the browser engine can finish updating 
+                // canvas graphics elements on screen *before* the modal locks down interaction focus.
+                setTimeout(() => {
+                    alert(`Coach's Instructions:\n\n${activeLevel.message}`);
+                }, 50);
             }
         }
 
         function drawGameLayout() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
             elements.forEach(obj => {
-                if (obj.name === 'correct') return;
+                if (obj.name === 'correct') return; // Hidden from player blueprint matrix view
 
                 ctx.save();
                 ctx.fillStyle = obj.isPlayer ? '#2563eb' : '#e2e8f0';
+                
                 if (obj.isPlayer) {
                     ctx.shadowBlur = 15;
                     ctx.shadowColor = '#2563eb';
                 }
+                
                 ctx.beginPath();
                 ctx.arc(obj.x, obj.y, 25, 0, Math.PI * 2);
                 ctx.fill();
@@ -203,6 +203,7 @@
             if (isLevelCleared) return;
             e.preventDefault();
             const pos = getCanvasCoordinates(e);
+            
             activeDragElement = elements.find(obj => obj.isPlayer && Math.hypot(obj.x - pos.x, obj.y - pos.y) < 30);
             if (!activeDragElement) {
                 activeDragElement = elements.find(obj => obj.name !== 'correct' && Math.hypot(obj.x - pos.x, obj.y - pos.y) < 30);
@@ -216,66 +217,40 @@
             if (!activeDragElement) return;
             e.preventDefault();
             const pos = getCanvasCoordinates(e);
+            
             activeDragElement.x = Math.max(30, Math.min(pos.x, canvas.width - 30));
             activeDragElement.y = Math.max(30, Math.min(pos.y, canvas.height - 30));
+            
             drawGameLayout();
             evaluateCollisionMatrix();
         }
 
         window.addEventListener('mouseup', endDrag);
         window.addEventListener('touchend', endDrag);
+
         function endDrag() { activeDragElement = null; }
 
         function evaluateCollisionMatrix() {
             const playerToken = elements.find(o => o.isPlayer);
             const targetToken = elements.find(o => o.name === 'correct');
+            
             if (!playerToken || !targetToken || isLevelCleared) return;
 
-            if (Math.hypot(playerToken.x - targetToken.x, playerToken.y - targetToken.y) < 45) {
+            const distance = Math.hypot(playerToken.x - targetToken.x, playerToken.y - targetToken.y);
+            
+            if (distance < 45) {
                 isLevelCleared = true;
                 activeDragElement = null;
-                submitCompletionToDatabase();
+                triggerSuccessCelebration();
             }
         }
 
-        // Fire transaction payload out to Apps Script endpoints 
-        async function submitCompletionToDatabase() {
+        function triggerSuccessCelebration() {
             sfxScore.play().catch(() => {});
-            document.getElementById('game-status-text').innerText = "Processing Stars...";
             
-            let payoutMessage = "Way to spot the option. You read the ice perfectly on that play!";
-            
-            if (activePlayerId && activeLevel) {
-                try {
-                    // Force activity mapping rules to register as "REPS" type
-                    const postUrl = `${API_URL}?action=completeActivity&playerId=${activePlayerId}&activityType=REPS&activityId=${activeLevel.id}`;
-                    const res = await fetch(postUrl, { method: 'POST' });
-                    const payload = await res.json();
-                    
-                    if (!payload.success) {
-                        // If duplication lock catches it, alter message box text array strings
-                        payoutMessage = "Nice work! You cleared this level again. (Note: You already earned your training stars for this script scenario).";
-                        isAlreadyCompleted = true;
-                    } else {
-                        isAlreadyCompleted = true;
-                    }
-                } catch (err) {
-                    console.error("Failed to commit activity progression telemetry:", err);
-                }
-            }
-
-            triggerSuccessCelebration(payoutMessage);
-        }
-
-        function triggerSuccessCelebration(customMessage) {
             document.getElementById('game-status-text').innerText = "✓ Level Cleared";
             document.getElementById('game-status-text').className = "text-xs font-bold uppercase tracking-wider text-emerald-400";
             
-            // Adjust the status bar labels instantly
-            const starStatus = document.getElementById('star-status-text');
-            starStatus.innerText = "✓ Cleared (0⭐)";
-            starStatus.className = "text-[10px] font-bold uppercase tracking-widest text-slate-500";
-
             const container = document.getElementById('victory-container');
             container.innerHTML = `
                 <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
@@ -287,14 +262,11 @@
                         </div>
                         <div>
                             <h2 class="text-2xl font-black tracking-tight text-white uppercase">Nice Play!</h2>
-                            <p class="text-xs text-slate-400 mt-2 leading-relaxed">${customMessage}</p>
+                            <p class="text-xs text-slate-400 mt-1">Way to spot the option. You read the ice perfectly on that play!</p>
                         </div>
-                        <div class="pt-2 flex flex-col gap-2">
+                        <div class="pt-2">
                             <button onclick="advanceToNextScenario()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/20 transition-colors cursor-pointer uppercase text-xs tracking-wider">
                                 Next Scenario ➔
-                            </button>
-                            <button onclick="closeModalOnly()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl transition-colors cursor-pointer uppercase text-[10px] tracking-wider">
-                                Stay on Board
                             </button>
                         </div>
                     </div>
@@ -302,24 +274,11 @@
             `;
         }
 
-        function closeModalOnly() {
-            document.getElementById('victory-container').innerHTML = "";
-        }
-
         function advanceToNextScenario() {
-            // Reset state checks for sequential clicking maps
-            isAlreadyCompleted = false; 
             let nextIndex = activeLevelIndex + 1;
             if (nextIndex >= levels.length) {
                 nextIndex = 0;
             }
-            
-            // If explicit query tracking parameters are set, alter them in the URL window cleanly
-            if (targetLevelId && levels[nextIndex]) {
-                const newUrl = window.location.pathname + `?levelId=${levels[nextIndex].id}&playerId=${activePlayerId}`;
-                window.history.pushState({ path: newUrl }, '', newUrl);
-            }
-            
             loadLevelByIndex(nextIndex);
         }
     </script>
