@@ -246,29 +246,50 @@
         }
 
         function triggerSuccessCelebration() {
-            sfxScore.play().catch(() => {});
-            
-            document.getElementById('game-status-text').innerText = "✓ Level Cleared";
-            document.getElementById('game-status-text').className = "text-xs font-bold uppercase tracking-wider text-emerald-400";
-            
-            const container = document.getElementById('victory-container');
-            container.innerHTML = `
-                <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
-                    <div class="bg-slate-900 border-2 border-emerald-500/30 p-8 rounded-2xl max-w-sm w-full text-center shadow-2xl space-y-6 animate-victory">
-                        <div class="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20 shadow-inner">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="text-2xl font-black tracking-tight text-white uppercase">Nice Play!</h2>
-                            <p class="text-xs text-slate-400 mt-1">Way to spot the option. You read the ice perfectly on that play!</p>
-                        </div>
-                       
-                    </div>
-                </div>
-            `;
+    sfxScore.play().catch(() => {});
+    
+    document.getElementById('game-status-text').innerText = "✓ Level Cleared";
+    document.getElementById('game-status-text').className = "text-xs font-bold uppercase tracking-wider text-emerald-400";
+    
+    // --- NEW DYNAMIC LINK UPDATE START ---
+    try {
+        // 1. Grab the current URL query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // 2. Fall back to your active code index + 1 if the URL didn't have a level parameter initially
+        if (!urlParams.has('level')) {
+            urlParams.set('level', (activeLevelIndex + 1).toString());
         }
+        
+        // 3. Append your "c" marker for completion/cleared status
+        urlParams.set('status', 'c');
+        
+        // 4. Silently update the browser's address link without refreshing the game page
+        const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+    } catch (err) {
+        console.error("Failed to silently update browser link:", err);
+    }
+    // --- NEW DYNAMIC LINK UPDATE END ---
+    
+    const container = document.getElementById('victory-container');
+    container.innerHTML = `
+        <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
+            <div class="bg-slate-900 border-2 border-emerald-500/30 p-8 rounded-2xl max-w-sm w-full text-center shadow-2xl space-y-6 animate-victory">
+                <div class="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20 shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-black tracking-tight text-white uppercase">Nice Play!</h2>
+                    <p class="text-xs text-slate-400 mt-1">Way to spot the option. You read the ice perfectly on that play!</p>
+                </div>
+               
+            </div>
+        </div>
+    `;
+}
 
         function advanceToNextScenario() {
             let nextIndex = activeLevelIndex + 1;
